@@ -1,0 +1,13 @@
+name: String = Swallow"
+
+class Job {
+  title: String
+  company: String
+  yearsOfExperience: Int(this > 0)
+}
+
+job: Job = new {
+  title = "Sr. Nest Maker"
+  company = "Nests R Us"
+  yearsOfExperience = -2
+}
