@@ -8,3 +8,4 @@ authors = ["Juha Västi"]
 anyhow = "1.0.93"
 camino = "1.1.9"
 clap = { version = "4.5.20", features = ["derive"] }
+new-pkl = "0.1.1"
