@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
+use new_pkl::{Pkl, PklResult, PklValue};
 use std::fs::File;
 use std::io::{stdout, Write};
 
@@ -71,6 +72,12 @@ fn write_output(path: &Option<Utf8PathBuf>, content: &str) -> Result<()> {
     Ok(())
 }
 
+fn parse(input: &str) -> PklResult<Pkl> {
+    let mut pkl = Pkl::new();
+    pkl.parse(input)?;
+    Ok(pkl)
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     println!("{:?}", cli);
@@ -83,7 +90,9 @@ fn main() -> Result<()> {
             path,
         } => {
             let input = read_input_file(modules)?;
-            write_output(path, &input)?;
+            let parsed_pkl = parse(&input);
+            println!("{:?}", parsed_pkl);
+            //write_output(path, &input)?;
             Ok(())
         }
         _ => {
