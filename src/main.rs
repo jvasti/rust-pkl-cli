@@ -1,4 +1,8 @@
+use anyhow::{Context, Result};
+use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
+use std::fs::File;
+use std::io::{stdout, Write};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -6,6 +10,7 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
+
 #[derive(ValueEnum, Clone, Debug)]
 enum Format {
     Text,
@@ -23,10 +28,10 @@ enum Commands {
         format: Format,
         /// File path where the output file is placed.
         #[arg(short = 'o', long = "output_path")]
-        path: Option<String>,
+        path: Option<Utf8PathBuf>,
         /// Module paths or URIs to evaluate.
-        #[arg(value_name = "MODULES", default_value = "stdin")]
-        modules: Vec<String>,
+        #[arg(value_name = "MODULES")]
+        modules: Utf8PathBuf,
     },
     /// (not implemented) Start a REPL session
     Repl {},
@@ -42,22 +47,48 @@ enum Commands {
     Analyze {},
 }
 
-fn main() {
-    let cli = Cli::parse();
+fn read_input_file(path: &Utf8PathBuf) -> Result<String> {
+    std::fs::read_to_string(path).context(format!("Failed to read file '{}'", path))
+}
 
+fn write_output(path: &Option<Utf8PathBuf>, content: &str) -> Result<()> {
+    match path {
+        Some(path) => {
+            let mut output_file = File::create_new(path)
+                .context(format!("Failed to create new output file '{}'", path))?;
+            output_file.write_all(content.as_bytes()).context(format!(
+                "Failed to write to output file:\nContent: {}",
+                content
+            ))?;
+        }
+        None => {
+            stdout()
+                .write_all(content.as_bytes())
+                .context(format!("Failed to write to stdout:\nContent: {}", content))?;
+        }
+    }
+
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    println!("{:?}", cli);
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level cmd
     match &cli.command {
         Commands::Eval {
-            format,
+            format: _,
             modules,
             path,
         } => {
-            println!(
-                " modules: {:?}\n format:{:?}\n path:{:?}",
-                modules, format, path
-            )
+            let input = read_input_file(modules)?;
+            write_output(path, &input)?;
+            Ok(())
         }
-        _ => println!("Not implemented"),
+        _ => {
+            println!("Not implemented");
+            Ok(())
+        }
     }
 }
