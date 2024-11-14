@@ -107,11 +107,10 @@ fn main() -> Result<()> {
                 _ => "Not implemented".to_string(),
             };
             write_output(path, &output)?;
-            Ok(())
         }
         _ => {
             println!("Not implemented");
-            Ok(())
         }
     }
+    Ok(())
 }
