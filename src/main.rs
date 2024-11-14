@@ -96,10 +96,14 @@ fn main() -> Result<()> {
                     input.get(span).unwrap_or("span not found")
                 )
             })?;
+            let pkl_variables = &parsed_pkl.table().variables;
             println!("{:?}", parsed_pkl);
             let output = match format {
-                Format::Json => serde_json::to_string_pretty(&parsed_pkl.table().variables)
+                Format::Json => serde_json::to_string_pretty(&pkl_variables)
                     .context("Failed to generate JSON.")?,
+                Format::Yaml => {
+                    serde_yml::to_string(&pkl_variables).context("Failed to generate YAML.")?
+                }
                 _ => "Not implemented".to_string(),
             };
             write_output(path, &output)?;
