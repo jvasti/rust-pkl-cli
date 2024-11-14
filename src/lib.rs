@@ -10,7 +10,7 @@ pub fn parse(input: &str) -> PklResult<Pkl> {
     pkl.parse(input)?;
     Ok(pkl)
 }
-
+#[derive(Debug)]
 pub struct SortedPklValue<'a>(pub &'a PklValue<'a>);
 
 impl<'a> Serialize for SortedPklValue<'a> {
@@ -62,7 +62,15 @@ impl<'a> Serialize for SortedPklValue<'a> {
 }
 
 pub fn read_input_file(path: &Utf8PathBuf) -> Result<String> {
-    std::fs::read_to_string(path).context(format!("Failed to read file '{}'", path))
+    if *path == *"-" {
+        let mut buffer = String::new();
+        std::io::stdin()
+            .read_to_string(&mut buffer)
+            .context("Failed to read from stdin")?;
+        Ok(buffer)
+    } else {
+        std::fs::read_to_string(path).context(format!("Failed to read file '{}'", path))
+    }
 }
 
 pub fn write_output(path: &Option<Utf8PathBuf>, content: &str) -> Result<()> {
