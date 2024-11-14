@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
-use new_pkl::{Pkl, PklResult, PklValue};
+use new_pkl::{Pkl, PklResult};
 use std::fs::File;
 use std::io::{stdout, Write};
 
@@ -80,19 +80,29 @@ fn parse(input: &str) -> PklResult<Pkl> {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    println!("{:?}", cli);
-    // You can check for the existence of subcommands, and if found use their
-    // matches just as you would the top level cmd
     match &cli.command {
         Commands::Eval {
-            format: _,
+            format,
             modules,
             path,
         } => {
             let input = read_input_file(modules)?;
-            let parsed_pkl = parse(&input);
+            println!("Input:\n{}\n\n", input);
+            let parsed_pkl = parse(&input).map_err(|(msg, span)| {
+                anyhow!(
+                    "{} at {:?}: {:?}",
+                    msg,
+                    span.clone(),
+                    input.get(span).unwrap_or("span not found")
+                )
+            })?;
             println!("{:?}", parsed_pkl);
-            //write_output(path, &input)?;
+            let output = match format {
+                Format::Json => serde_json::to_string_pretty(&parsed_pkl.table().variables)
+                    .context("Failed to generate JSON.")?,
+                _ => "Not implemented".to_string(),
+            };
+            write_output(path, &output)?;
             Ok(())
         }
         _ => {
