@@ -104,6 +104,9 @@ fn main() -> Result<()> {
                 Format::Yaml => {
                     serde_yml::to_string(&pkl_variables).context("Failed to generate YAML.")?
                 }
+                Format::Toml => {
+                    toml::to_string_pretty(&pkl_variables).context("Failed to generate TOML")?
+                }
                 _ => "Not implemented".to_string(),
             };
             write_output(path, &output)?;
