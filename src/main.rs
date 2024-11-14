@@ -14,7 +14,7 @@ struct Cli {
 
 #[derive(ValueEnum, Clone, Debug)]
 enum Format {
-    Text,
+    Raw,
     Json,
     Yaml,
     Toml,
@@ -25,7 +25,7 @@ enum Commands {
     /// Render pkl module(s)
     Eval {
         /// Output format to generate.
-        #[arg(short, long, value_enum, default_value_t = Format::Text)]
+        #[arg(short, long, value_enum, default_value_t = Format::Json)]
         format: Format,
         /// File path where the output file is placed.
         #[arg(short = 'o', long = "output_path")]
@@ -87,7 +87,6 @@ fn main() -> Result<()> {
             path,
         } => {
             let input = read_input_file(modules)?;
-            println!("Input:\n{}\n\n", input);
             let parsed_pkl = parse(&input).map_err(|(msg, span)| {
                 anyhow!(
                     "{} at {:?}: {:?}",
@@ -97,7 +96,6 @@ fn main() -> Result<()> {
                 )
             })?;
             let pkl_variables = &parsed_pkl.table().variables;
-            println!("{:?}", parsed_pkl);
             let output = match format {
                 Format::Json => serde_json::to_string_pretty(&pkl_variables)
                     .context("Failed to generate JSON.")?,
@@ -107,7 +105,7 @@ fn main() -> Result<()> {
                 Format::Toml => {
                     toml::to_string_pretty(&pkl_variables).context("Failed to generate TOML")?
                 }
-                _ => "Not implemented".to_string(),
+                Format::Raw => format!("{:#?}", &pkl_variables),
             };
             write_output(path, &output)?;
         }
