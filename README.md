@@ -1,6 +1,6 @@
 # Rust-pkl-cli
 
-A rust implementation of [Apple's PKL CLI](https://pkl-lang.org/main/current/pkl-cli/index.html).
+A rust implementation of the [CLI](https://pkl-lang.org/main/current/pkl-cli/index.html) for [PKL language](https://pkl-lang.org/) .
 
 Uses [new-pkl](https://github.com/DevYatsu/new-pkl) to do the actual parsing, so PKL language support is limited to
 what it supports.
