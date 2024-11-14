@@ -3,7 +3,7 @@ use camino::Utf8PathBuf;
 use new_pkl::{Pkl, PklResult, PklValue};
 use serde::ser::{Serialize, SerializeMap, SerializeSeq, Serializer};
 use std::fs::File;
-use std::io::{stdout, Write};
+use std::io::{self, stdout, Read, Write};
 
 pub fn parse(input: &str) -> PklResult<Pkl> {
     let mut pkl = Pkl::new();

@@ -73,7 +73,7 @@ fn main() -> Result<()> {
                     .context("Failed to generate YAML.")?,
                 Format::Toml => toml::to_string_pretty(&sorted_pkl_variables)
                     .context("Failed to generate TOML")?,
-                Format::Raw => "".to_string(),
+                Format::Raw => format!("#{:?}", sorted_pkl_variables),
             };
             write_output(path, &output)?;
         }
