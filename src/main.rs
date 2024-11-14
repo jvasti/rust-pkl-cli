@@ -1,9 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
-use new_pkl::{Pkl, PklResult};
-use std::fs::File;
-use std::io::{stdout, Write};
+use new_pkl::PklValue;
+use rust_pkl_cli::*;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -30,7 +29,7 @@ enum Commands {
         /// File path where the output file is placed.
         #[arg(short = 'o', long = "output_path")]
         path: Option<Utf8PathBuf>,
-        /// Module paths or URIs to evaluate.
+        /// Module path to evaluate.
         #[arg(value_name = "MODULES")]
         modules: Utf8PathBuf,
     },
@@ -46,36 +45,6 @@ enum Commands {
     DownloadPackage {},
     /// (not implemented) Commands related to static analysis
     Analyze {},
-}
-
-fn read_input_file(path: &Utf8PathBuf) -> Result<String> {
-    std::fs::read_to_string(path).context(format!("Failed to read file '{}'", path))
-}
-
-fn write_output(path: &Option<Utf8PathBuf>, content: &str) -> Result<()> {
-    match path {
-        Some(path) => {
-            let mut output_file = File::create_new(path)
-                .context(format!("Failed to create new output file '{}'", path))?;
-            output_file.write_all(content.as_bytes()).context(format!(
-                "Failed to write to output file:\nContent: {}",
-                content
-            ))?;
-        }
-        None => {
-            stdout()
-                .write_all(content.as_bytes())
-                .context(format!("Failed to write to stdout:\nContent: {}", content))?;
-        }
-    }
-
-    Ok(())
-}
-
-fn parse(input: &str) -> PklResult<Pkl> {
-    let mut pkl = Pkl::new();
-    pkl.parse(input)?;
-    Ok(pkl)
 }
 
 fn main() -> Result<()> {
@@ -95,17 +64,16 @@ fn main() -> Result<()> {
                     input.get(span).unwrap_or("span not found")
                 )
             })?;
-            let pkl_variables = &parsed_pkl.table().variables;
+            let pkl_variables = PklValue::Object(parsed_pkl.table().variables.clone());
+            let sorted_pkl_variables = SortedPklValue(&pkl_variables);
             let output = match format {
-                Format::Json => serde_json::to_string_pretty(&pkl_variables)
+                Format::Json => serde_json::to_string_pretty(&sorted_pkl_variables)
                     .context("Failed to generate JSON.")?,
-                Format::Yaml => {
-                    serde_yml::to_string(&pkl_variables).context("Failed to generate YAML.")?
-                }
-                Format::Toml => {
-                    toml::to_string_pretty(&pkl_variables).context("Failed to generate TOML")?
-                }
-                Format::Raw => format!("{:#?}", &pkl_variables),
+                Format::Yaml => serde_yml::to_string(&sorted_pkl_variables)
+                    .context("Failed to generate YAML.")?,
+                Format::Toml => toml::to_string_pretty(&sorted_pkl_variables)
+                    .context("Failed to generate TOML")?,
+                Format::Raw => "".to_string(),
             };
             write_output(path, &output)?;
         }
