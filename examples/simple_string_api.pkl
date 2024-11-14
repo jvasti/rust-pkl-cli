@@ -1,0 +1,8 @@
+name = "Swallow"
+
+job {
+  title = "Sr. Nest Maker"
+  titleLength = title.length
+  company = "Nests R Us"
+  yearsOfExperience = 2
+}
